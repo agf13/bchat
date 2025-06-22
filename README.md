@@ -1,5 +1,6 @@
 # Bchat
 ### work in progress. Current implementation: 6 bit encoding
+You kind of need to read the 
 
 ## Introduction
 This only works on Android. After fully finishing the implementation here, I will try getting an Apple laptop to make it availalbe for iOS as well.
@@ -31,6 +32,9 @@ A character is usually encoded on 1 byte ( = 8 bits). So instead of using this w
 Currently only the 6 bit encoding is actually used, but implementation for the 5 bit one is already in place.
 
 # Running the app
+Bluetooth AND location needs to be enabled. There is some enforcement to skip the need of the location but it's not yet tested. The location is needed because receiving bluetooth data means the device IS IN RANGE, which is quite small and would imply disclosing the location. But since this is meant as a message app and messages might be broadcasted from a 100 devices away, in future it will be possible to disable this need. 
+Location needs to be allowed manually from the app settings in the phone. No popup is yet implemented for that. Without the location permission and bluetooth + location enabled, scanning and broadcasting cannot be used.
+
 I will explain how I run the app, since this is sometimes a tricky topic if installation is not done correctly.
 I use npx version 10.9.2
 I open a terminal window from the project directory (from it's root).
@@ -53,3 +57,13 @@ Noe click "start broadcasting".
 All 3 steps are needed to be able to broadcast messages received. Otherwise you will only be able to receive messages, they will be added to the cyclic list, but will not be broadcasted. There needs to be at least a message in the cyclic list for the device to start broadcasting and act as a node in the network.
 
 This is currently cumbersome, but it's a first implementation that is presentable.
+
+# Presentation
+
+Home screen. Here we can delete the existing messages and access the chat screen. Ignore the rest of the buttons so far
+<img src="https://github.com/user-attachments/assets/ab789a99-bb42-44fb-8770-4672a8104658" height="700"/>
+
+Chat screen. Here are the buttons to add messages (3rd one), start broadcasting (2nd once), start scanning (1st one).
+<img src="https://github.com/user-attachments/assets/7410b942-2651-4388-990d-72c40f8286bd" height="700"/>
+
+As you can see, currently all metadata is displayed with the message. The ttl (time to live) is not yet used. The maximum length of a message is displayed by the "A" letters. There is no "null character" or "string end character" to figure out where the message ends, so you will see the actual message padded with "A" letters at the end.
