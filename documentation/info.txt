@@ -1,0 +1,34 @@
+o Ce date retinem per packet. De ce avem nevoie pentru un mesaj ca sa poata fi trimis?
+
+- Mesajul 	- result de spatiu - (partea de text a measajului)
+- Encoding 	- 2 biti -(un numar ce sa reprezinte cum este encodat mesajul)
+	- - 0 (totul e default, se pot trimite emoji-uri)
+	- - 1 (doar A-Z, a-z, 0-9, spatiu si punct. Este encoding pe 6 biti -> 64 caractere, literele A-Za-z si cifrele 0-9 -> 26+26+10=62 caractere, si mai este loc de spatiu si punct pana la 64)
+	- - 2 (doar a-z 0-9 si niste caractere. Tot pe 6 biti, a-z0-9 -> 26+10 = 36 caractere => avem 64-36=28 de caractere ce mai pot fi atribuite. Putem pune urmatoarele:
+\ (spatiu punct virgula ? ! ' " ; : ( ) * & ^ % $ # @ ~ \ / > < - _ = +) astea sunt 27 de caractere. Ar mai fi loc de unul, dar prea greu de ales. Ignoram momentan)
+	- - 3 (doar a-z si niste caractere. Encodare pe 5 biti => 32 de caractere. a-z sunt 26. Inseamna ca mai putem alege 32-26 = 6 caractere. Astea pot fi (spatiu . , _ ? !))
+- MessagePart 	- 2 biti -(putem accepta ca un mesaj sa fie format din multiple parti si pus inapoi impreuna. Pentru ca acest lucru sa fie posibil, am avea nevoie de un id unui per mesaj)
+- TimeStamp 	- 2 bytes -(ocupa 2 bytes. Nu voiam initial, dar e necesar pentru a implementa impartirea mesajului pe mai multe parti)
+- Room 			- 2 bytes - (reprezinta canalul pe care se trimite mesajul. As putea sa-l pun pe 2 bytes = 65536 canale [0,65535]. Canalul se poate schimba oricand si oricine e pe un canal va vedea toate
+\ mesajele. Mai mult. Oric device cu aplicatia va receptiona mesajele de pe toate canalele. Dar filtrand dupa canal se pot afisa doar anumite mesaje)
+
+result: Packetul va contine ----> (ID - doar pt DB), room, message, encoding, messagePart, TimeStamp
+
+
+
+o Refacem logica:
+
+Strategie de routing
+- O varianta e folosirea unui ttl (time to live) pentru a renunta la packete care trec prin mai mult de n device-uri
+\ Varianta prezentata mai sus nu mi se pare fezabila usor daca vreau sa acopar zone de 10 kilometri. Pt 10 kilometri si 20 de metri
+\ distanta de progrpagare de la un device, ar fi nevoie de (10000/20 = 500 hopuri (ttl)). Asta ar fi un numar mare, desi daca vreau
+\ sa permit un numar infinit de hopuri, este defapt irelevant daca sunt 500 de hopuri. 
+\ Este totusi o problema daca ar fi sa existe un hacker ce sa plaseze un device special pentru a umple network-ul de mesaje fara sens
+\ pentru a intrerupe comunicare. In acest caz. un ttl setat ar salva acest caz pentru ca ar fi probleme doar intr-o anumita raza
+
+- Deoarece doresc ca distanta sa fie maxima, o sa permit ignorarea ttl-ului. Practic mesajele for avea un ttl de 1000. El va decrementa la
+\ fiecare device care face broadcast. Cand ajunge la 0 ramane 0. EU CE VOI PERMITE va fi ca user-ul sa aleaga
+- - ttl infinit = va continua sa faca broadcast si la ttl 0
+- - ttl choosing = user-ul va putea alege la ce ttl va renunta la a mai face rebroadcast. Isi poate alege orice numar intre 0 si 1000.
+\ ce sper cu acest lucru e ca daca se vor plasa device-uri pentru a face flooding cu mesase, cererea userilor sa reduca ttl-ul la 10 ar putea
+\ ajuta in localizarea device-ul care face flooding. CE SE POATE ADAUGA, e un offset mic la ttl pentru a masca putin distanta de unde vine

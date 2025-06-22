@@ -1,0 +1,46 @@
+Daca pot obtine string-ul -> "00101011010101" ce sa represinte encodarea pe 6 sau 5 biti.
+
+? Cum pot sa il transform in baza64 pentru a-l trimite spre java si apoi sa-l reobtin in modul original?
+
+As putea sa fac padding pana la numarul maxim de biti acceptati -> 31bytes = 8*31 biti . In felul asta putem linistit sa trimitem baza 5 sau 6. Ea va fi inpartita in numere di 8 in 8 cand va fi trimisa,
+dar acest lucru nu este o problema pentru ca la primire putem concatena varianta in baza 2 a numarului si as luam din 5 in 5 sau din 6 in 6 in functie de necesitate.
+
+X room
+message 
+X encoding
+X messagePart
+X extra
+X ttl
+X mId
+
+magic_number = 1F3B = 1111 0011 1110 0011| 
+
+example: 0001.1111.0011.1011 mID messagePart room encoding ttl extra message
+	 2B		     2B  4b          2B   2b       10b 6bit  ?
+
++ probabil 3B reserved for flags
+	 
+2B + 2B + 4bit + 2B + 2bit + 10bit + 6bit + 3B = 9B + 22b = 9B + (2B + 6b) = 11B + 6b
+--   --          --                         __
+
+Din 31B - 11B = 20B
+20B - 6b = 19B + 2b  | => Raman de folosit 154b
+19B = 152b           |
+
+154 / 8 => ~ 19 (r.2) // 19 usual ascii chars
+154 / 5 => ~ 30 (r.4) // 30 5 bit encoded chars
+154 / 6 => ~ 25 (r.4) // 25 6 bit encoded chars
+
+208 / 8 = 26 bytes
+
+----- added one letter name
+154 - 8 = 148
+148 / 8 => ~18
+148 / 6 => 24 (r.2)
+148 / 5 => 28 (r.1)
+
+---- subtracting 10 more bytes
+154 - 80 = 74
+74 / 8 => ~9
+74 / 6 => ~12
+74 / 5 => ~14
