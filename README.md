@@ -1,6 +1,6 @@
 # Bchat
 ### work in progress. Current implementation: 6 bit encoding
-You kind of need to read the 
+It is advised to read the entire "Running the app" before trying to follow the instructions.
 
 ## Introduction
 This only works on Android. After fully finishing the implementation here, I will try getting an Apple laptop to make it availalbe for iOS as well.
