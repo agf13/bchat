@@ -1,97 +1,55 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Bchat
+### work in progress. Current implementation: 6 bit encoding
 
-# Getting Started
+## Introduction
+This only works on Android. After fully finishing the implementation here, I will try getting an Apple laptop to make it availalbe for iOS as well.
+As much as possible is implemented in react-native to minimize the platform specific implementation.
+The only platform specific implementation is broadcasting data from the native side. Scanning for bluetooth packets and everything else is handled with react native.
+A magic number is used to distinguish bluetooth packets from the app itself against other bluetooth communication around.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+This is a react-native application for a chat working on mesh networking instead of the existing internet infrastructure.
+Mesh networking is a way of allowing devices to communicate if enogh devices are in-betwee the sender and the receiver. The existing internet is bascially just a big mesh.
+This application wants to provide a way for messaging without the need for the existing infrastructure. Though it will be challenging to get enough users for this to be usable, we tought this would make for a nice side-project.
 
-## Step 1: Start Metro
+The app does not encrypt, it just encodes.
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## How it works
+The application uses bluetooth for sending messages. It does not connect with nearby devices, but instead it broadcasts the data.
+Broadcasting data means sending packets of data in all directions in case recipients are in range. IT DOES NOT CONNECT with devices to send data. Once a packet of data is received, it is checked against the device's database, and if the packet is new, the device will start broadcasting the packet as well. It will not stop broadcasting it untill either: 1) the application is closed, 2) bluetooth is closed, 3) a new message overwrites it.
+We use a list of 1000 messages stored internally. The list is cyclic. When a new message is received or when a message is sent, is added to this list. While the broadcasting is open, the app cycles through the list and sends the messages one by one.
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+This implementation uses 31 bytes per bluetooth packet and maximum energy level for bluetooth to reach somewhere between 20-100 meters. The actual number of bytes available to send messages is lower, because in those 31 bytes we need to add metadata like timestamp, random id, decoding data and a couple other info which is necessary for the message to be interpreted.
 
-```sh
-# Using npm
-npm start
+Newer implementation of Bluetooth would accept up to about 250 bytes of data, but to be compatible with as many devices as possible we stick with the legacy implementation of 31 bytes.
 
-# OR using Yarn
-yarn start
-```
+## Challenges
+To sent messages with only 31 bytes of data, we needed to make a custom encoding of characters to lower the space needed for encoding the message. That means some characters or symbols will not be available.
+A character is usually encoded on 1 byte ( = 8 bits). So instead of using this we implemented a 6 bit encoding. We actually have 4 levels of encoding:
+- clasic unchanged encoding (but allows for very few characters)
+- 6 bit encoding
+- 5 bit encoding (this is as small as we can go, since the alphabet used by us has 26 letters)
+Currently only the 6 bit encoding is actually used, but implementation for the 5 bit one is already in place.
 
-## Step 2: Build and run your app
+# Running the app
+I will explain how I run the app, since this is sometimes a tricky topic if installation is not done correctly.
+I use npx version 10.9.2
+I open a terminal window from the project directory (from it's root).
+I connect the device to my PC and run from 2 separate terminal tabs: 
+"npx react-native start"
+then 
+"npx react-native run-android". 
+This only runs the app WHILE IT'S CONNECTED to the PC. To be able to run it after you disconnect it as well, you frist need to run:
+npx react-native bundle --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --platform android --dev false --minify true --assets-dest android/app/src/main/res
+The above command bundles the packages such that the app can be run without needing "npx react-native start".
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+### In progress
+Currently, the UI is incredibly basic and only uses the 6 bits encoding. It has a home screen and a chat screen.
+The chat screen displays all messages.
+Once the chat screen is accessed, you need to manually click the "start scan" button to scan for messages.
+You also need to add one message by writing something in the text box and clicking "add message".
+AFTER ADDING A MESSAGE, click "start broadcast" -> this starts the cyclic list to send messages. If the list is empty and you click "start broadcasting" nothign will happen.
+Noe click "start broadcasting".
 
-### Android
+All 3 steps are needed to be able to broadcast messages received. Otherwise you will only be able to receive messages, they will be added to the cyclic list, but will not be broadcasted. There needs to be at least a message in the cyclic list for the device to start broadcasting and act as a node in the network.
 
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
-```
-
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
-```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
-```
-
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
-
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
-
-## Step 3: Modify your app
-
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+This is currently cumbersome, but it's a first implementation that is presentable.
