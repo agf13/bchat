@@ -24,7 +24,7 @@ public class BluetoothModule extends ReactContextBaseJavaModule {
 	int interval = 200;
 	int index = 0;
 	List<byte[]> messageList = new ArrayList<>();
-	int maxMessages = 10;
+	int maxMessages = 1000;
 	int cycleIndex = -1; // starting from -1 so that when the messages are building to fill up the list, when the list is full cycleIndex should point at the last element (size - 1)
 	BluetoothLeAdvertiser advertiser = BluetoothAdapter.getDefaultAdapter().getBluetoothLeAdvertiser();
 
@@ -95,7 +95,7 @@ public class BluetoothModule extends ReactContextBaseJavaModule {
 
 			advertiser.startAdvertising(settings, advertiseData, advertiseCallback);
 
-			handler.postDelayed(this, 20); // wait 0.02s before next execution
+			handler.postDelayed(this, 10); // wait 0.01s before next execution
 		}
 	};
 
